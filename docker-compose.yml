@@ -1,0 +1,64 @@
+version: '3'
+services:
+
+  #PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: ./app/Dockerfile
+    image: techstreamprd01.azurecr.io/rapidboda-web
+    container_name: app
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./app:/var/www
+    networks:
+      - app-network
+
+  # #Nginx Service
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: nginx
+  #   restart: unless-stopped
+  #   tty: true
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./:/var/www
+  #     - ./nginx/conf.d/:/etc/nginx/conf.d/
+  #   networks:
+  #     - app-network
+
+  nginx:
+    image: nginx:latest
+    build:
+      context: .
+      args:
+        - "BUILD_ARGUMENT_ENV=prod"
+      dockerfile: ./nginx/Dockerfile
+    container_name: nginx
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - .:/var/www/html:ro
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+
+#Volumes
+volumes:
+  dbdata:
+    driver: local
